@@ -3,6 +3,12 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 
+# TODO:
+# Plot beta as function of polynomial order
+# Plot the MSE/R2 results, not just print them
+# Add scaling/centering of data (e.g. by the mean)
+# and explanation why you might do this
+
 def FrankeFunction(x,y):
     term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
     term2 = 0.75*np.exp(-((9*x+1)**2)/49.0 - 0.1*(9*y+1))
@@ -71,8 +77,8 @@ x_, y_ = np.meshgrid(x, y)
 z = FrankeFunction(x_, y_)
 z += np.random.normal(0, 0.1*np.mean(z), z.shape) # Adding some normal noise
 
-### Split data into training and test data, using ~15% as test data
-test_size = int(0.15*x.size)
+### Split data into training and test data, using ~25% as test data
+test_size = int(0.25*x.size)
 x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst = train_test_data(x_, y_, z, test_size)
 
 ### Make design matrix, calculate beta for OLS, and get model, orders 2 to 6 covered
