@@ -75,7 +75,7 @@ z += np.random.normal(0, 0.1*np.mean(z), z.shape) # Adding some normal noise
 test_size = int(0.15*x.size)
 x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst = train_test_data(x_, y_, z, test_size)
 
-### Make design matrix, calculate beta for OLS, and get model, orders 2 to 5 covered
+### Make design matrix, calculate beta for OLS, and get model, orders 2 to 6 covered
 order = [2, 6]
 X_lrn    = dict()
 X_tst    = dict()
