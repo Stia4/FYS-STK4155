@@ -1,17 +1,7 @@
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
-from random import random, seed
-
-#
-# TODO:
-# Noise in data
-# Split data into train/test
-# Actually use MSE to gauge fit
-# Nicer plots
-#
 
 def FrankeFunction(x,y):
     term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
@@ -40,6 +30,26 @@ def create_X(x, y, n = 5):
 
 	return X
 
+def train_test_data(x, y, z, i):
+	"""
+	Takes in x,y and z arrays, and a array with random indesies iself.
+	returns learning arrays for x, y and z with (N-len(i)) dimetions
+	and test data with length (len(i))
+	"""
+	if len(x.shape) > 1:
+		x = x.flatten()
+		y = y.flatten()
+		z = z.flatten()
+
+	x_learn = x[:-i]
+	y_learn = y[:-i]
+	z_learn = z[:-i]
+	x_test  = x[-i:]
+	y_test  = y[-i:]
+	z_test  = z[-i:]
+
+	return x_learn, y_learn, z_learn, x_test, y_test, z_test
+
 def MSE(y, y_tilde):
 	"""
 	Function for computing mean squared error.
@@ -47,33 +57,59 @@ def MSE(y, y_tilde):
 	"""
 	return np.sum((y-y_tilde)**2)/y.size
 
+def R2_Score(y, y_tilde):
+	"""
+	Function for computing the R2 score.
+	Input is y: analytical solution, y_tilde: computed solution.
+	"""
+	return 1 - np.sum((y[:-2]-y_tilde[:-2])**2)/np.sum((y[:-2]-np.average(y))**2)
+
 ### Make goal data
-x = np.arange(0, 1, 0.05)
-y = np.arange(0, 1, 0.05)
-x, y = np.meshgrid(x,y)
-z = FrankeFunction(x, y) # shape (20, 20)
-# HERE: Add noise?
-# HERE: Split into train / test, avoid potential overfitting
+x = np.arange(0, 1, 0.01)
+y = np.arange(0, 1, 0.01)
+x_, y_ = np.meshgrid(x, y)
+z = FrankeFunction(x_, y_)
+z += np.random.normal(0, 0.1*np.mean(z), z.shape) # Adding some normal noise
+
+### Split data into training and test data, using ~15% as test data
+test_size = int(0.15*x.size)
+x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst = train_test_data(x_, y_, z, test_size)
 
 ### Make design matrix, calculate beta for OLS, and get model, orders 2 to 5 covered
-X        = dict()
+order = [2, 6]
+X_lrn    = dict()
+X_tst    = dict()
 beta_OLS = dict()
-z_model  = dict()
-for i in range(2, 5+1):
-    X[i]        = create_X(x, y, i)
-    beta_OLS[i] = np.linalg.inv(X[i].T.dot(X[i])).dot(X[i].T).dot(np.ravel(z))
-    z_model[i]  = np.reshape(X[i] @ beta_OLS[i], z.shape)
+z_lrn_model  = dict()
+z_tst_model  = dict()
+for i in range(order[0], order[1]+1):
+	X_lrn[i]    = create_X(x_lrn, y_lrn, i)
+	X_tst[i]    = create_X(x_tst, y_tst, i)
+	print(X_lrn[i].shape)
+	beta_OLS[i] = np.linalg.pinv(X_lrn[i].T @ X_lrn[i]) @ X_lrn[i].T @ z_lrn
+	z_lrn_model[i]  = np.reshape(X_lrn[i] @ beta_OLS[i], z_lrn.shape)
+	z_tst_model[i]  = np.reshape(X_tst[i] @ beta_OLS[i], z_tst.shape)
 
-# HERE: Use MSE/R2/other metric to gauge fit
+### Check fit using MSE and R2, printing as a nice table
+header  = "".join(["|{:^10d}".format(i) for i in beta_OLS.keys()])
+MSE_lrn = "".join(["|{:^10.2e}".format(     MSE(z_lrn, z_lrn_model[i])) for i in beta_OLS.keys()])
+MSE_tst = "".join(["|{:^10.2e}".format(     MSE(z_tst, z_tst_model[i])) for i in beta_OLS.keys()])
+R2_lrn  = "".join(["|{:^10.2e}".format(R2_Score(z_lrn, z_lrn_model[i])) for i in beta_OLS.keys()])
+R2_tst  = "".join(["|{:^10.2e}".format(R2_Score(z_tst, z_tst_model[i])) for i in beta_OLS.keys()])
+print("\n lrn " + header)
+print(" MSE " + MSE_lrn)
+print(" MSE " + R2_lrn + "\n")
+print(" tst " + header)
+print(" MSE " + MSE_tst)
+print(" MSE " + R2_tst + "\n")
 
-### Make plots
-# Make them all show at once rather than one by one?
-fig = plt.figure()
-ax = fig.gca(projection='3d')
-surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+### Make plot(s)
+fig = plt.figure(figsize=plt.figaspect(1.0/3.0))
+ax = fig.add_subplot(2, 3, 1, projection='3d')
+ax.plot_surface(x_, y_, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+ax.set_title("Data")
+for i in beta_OLS.keys():
+	ax = fig.add_subplot(2, 3, i-min(beta_OLS.keys())+2, projection='3d')
+	ax.plot_surface(x_, y_, np.concatenate([z_lrn_model[i], z_tst_model[i]]).reshape(z.shape), cmap=cm.coolwarm, linewidth=0, antialiased=False)
+	ax.set_title(f"Pol. deg {i}")
 plt.show()
-for i in range(2, 5+1):
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    surf = ax.plot_surface(x, y, z_model[i], cmap=cm.coolwarm, linewidth=0, antialiased=False)
-    plt.show()
