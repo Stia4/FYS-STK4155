@@ -2,14 +2,12 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error as MSE_skl
+from sklearn.metrics import r2_score as R2_skl
 
 plt.rcParams["figure.figsize"] = (12, 8)
 plt.rcParams.update({'font.size': 16})
 np.random.seed(0)
-
-# TODO:
-# Compare MSE/R2 to scikit.learn to check them?
 
 def FrankeFunction(x,y):
 	"""
@@ -63,17 +61,19 @@ def train_test_data_evenly(x, y, z, n = 4):
 
 	return x_learn, y_learn, z_learn, x_test, y_test, z_test
 
-# def combine_train_test(z_learn, z_test, n = 4):
-# 	"""
-# 	Recombines test and train data which has been split by train_test_data_evenly.
-# 	"""			
-# 	z = []
-# 	for i in range(len(z_test)):
-# 		for j in range(n-1):
-# 			z.append(z_learn[(n-1)*i + j])
-# 		z.append(z_test[i])
+def combine_train_test(z_learn, z_test, n = 4):
+	"""
+	Recombines test and train data which has been split by train_test_data_evenly.
+	"""				
+	z = np.zeros(len(z_learn)+len(z_test))
 
-# 	return np.array(z)
+	mask = np.zeros(z.shape, dtype=bool)
+	mask[slice(None, None, n)] = True # test: true, train: false
+
+	z[~mask] = z_learn
+	z[ mask] = z_test
+
+	return z
 
 def MSE(y, y_tilde):
 	"""
@@ -136,18 +136,26 @@ plt.tight_layout()
 plt.savefig("fig/Beta.pdf", format="pdf")
 plt.clf()
 
-### Check fit using MSE and R2, printing as a nice table
+### Check fit using MSE and R2, printing as a nice table, using both our and sklearn's MSE/R2 functions
 header  = "".join(["|{:^10d}".format(i) for i in orders])
 MSE_lrn = [     MSE(z_lrn, z_lrn_model[i]) for i in orders]
 MSE_tst = [     MSE(z_tst, z_tst_model[i]) for i in orders]
 R2_lrn  = [R2_Score(z_lrn, z_lrn_model[i]) for i in orders]
 R2_tst  = [R2_Score(z_tst, z_tst_model[i]) for i in orders]
-print("\n learn " + header)
-print("  MSE  "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_lrn])       )
-print("   R2  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_lrn]) + "\n")
-print("  test " + header)
-print("  MSE  "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_tst])       )
-print("   R2  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_tst]) + "\n")
+MSE_lrn_skl = [MSE_skl(z_lrn, z_lrn_model[i]) for i in orders]
+MSE_tst_skl = [MSE_skl(z_tst, z_tst_model[i]) for i in orders]
+R2_lrn_skl  = [ R2_skl(z_lrn, z_lrn_model[i]) for i in orders]
+R2_tst_skl  = [ R2_skl(z_tst, z_tst_model[i]) for i in orders]
+print("\n learn  " + header)
+print("MSE     "+"".join(["|{:^10.2e}".format(MSE) for MSE in     MSE_lrn])       )
+print("MSE_skl "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_lrn_skl])       )
+print("R2      "+"".join(["|{:^10.2e}".format( R2) for  R2 in      R2_lrn])       )
+print("R2_skl  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_lrn_skl]) + "\n")
+print("  test  " + header)
+print("MSE     "+"".join(["|{:^10.2e}".format(MSE) for MSE in     MSE_tst])       )
+print("MSE_skl "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_tst_skl])       )
+print("R2      "+"".join(["|{:^10.2e}".format( R2) for  R2 in      R2_tst])       )
+print("R2_skl  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_tst_skl]) + "\n")
 
 ### Plotting the MSE/R2 as function of polynomial degree
 plt.plot(orders, MSE_lrn, label="MSE Training data"     )
@@ -161,10 +169,10 @@ plt.tight_layout()
 plt.savefig("fig/MSE.pdf", format="pdf")
 plt.clf()
 plt.plot(orders,  R2_lrn, label="R2 Score Training data")
-plt.plot(orders,  abs(np.array(R2_tst)), label="R2 Score Test data"    )
+plt.plot(orders,  R2_tst, label="R2 Score Test data"    )
 plt.xticks(ticks=orders)
 plt.xlabel("Polynome order")
-plt.ylabel("Absolute R2 Score")
+plt.ylabel("R2 Score")
 plt.yscale("log")
 plt.legend()
 plt.tight_layout()
@@ -179,17 +187,15 @@ view = [30, 90] # Viewing angle in degrees, [height, rotation]
 fig = plt.figure(figsize=plt.figaspect(ratio[0]/ratio[1]))
 ax = fig.add_subplot(*dims, 1, projection='3d')
 ax.plot_surface(x_, y_, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-ax.set_xticks([0.0, 0.5, 1.0])
+ax.set_xticks([0.0, 0.5, 1.0]) # Reducing amount of tickmarks for clarity
 ax.set_yticks([0.0, 0.5, 1.0])
 ax.set_zticks([-0.5, 0.0, 0.5])
 ax.set_title("Data", y=1.0, pad=0)
 ax.view_init(*view)
-for i in beta_OLS.keys():
+for i in orders:
 	ax = fig.add_subplot(*dims, i-min(orders)+2, projection='3d')
-	ax.plot_surface(x_, y_, np.reshape(create_X(x_, y_, i) @ beta_OLS[i], z.shape),
+	ax.plot_surface(x_, y_, combine_train_test(z_lrn_model[i], z_tst_model[i], test_size).reshape(z.shape),
 					cmap=cm.coolwarm, linewidth=0, antialiased=False)
-	# ax.plot_surface(x_, y_, combine_train_test(z_lrn_model[i], z_tst_model[i], test_size).reshape(z.shape),
-	# 				cmap=cm.coolwarm, linewidth=0, antialiased=False)
 	ax.set_xticks([0.0, 0.5, 1.0])
 	ax.set_yticks([0.0, 0.5, 1.0])
 	ax.set_zticks([-0.5, 0.0, 0.5])
