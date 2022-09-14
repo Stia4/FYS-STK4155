@@ -118,4 +118,20 @@ for i in beta_OLS.keys():
 	ax = fig.add_subplot(2, 3, i-min(beta_OLS.keys())+2, projection='3d')
 	ax.plot_surface(x_, y_, np.concatenate([z_lrn_model[i], z_tst_model[i]]).reshape(z.shape), cmap=cm.coolwarm, linewidth=0, antialiased=False)
 	ax.set_title(f"Pol. deg {i}")
+plt.tight_layout()
+plt.show()
+
+degrees = [float(i) for i in beta_OLS.keys()]
+MSE_lrn = [MSE(z_lrn, z_lrn_model[i]) for i in beta_OLS.keys()]
+MSE_tst = [MSE(z_tst, z_tst_model[i]) for i in beta_OLS.keys()]
+R2_lrn  = [R2_Score(z_lrn, z_lrn_model[i]) for i in beta_OLS.keys()]
+R2_tst  = [R2_Score(z_tst, z_tst_model[i]) for i in beta_OLS.keys()]
+
+fig, ax = plt.subplots(ncols=2)
+ax[0].plot(degrees, MSE_lrn, label='MSE learn')
+ax[0].plot(degrees, MSE_tst, label='MSE test')
+
+ax[1].plot(degrees, R2_lrn, label='R2 learn')
+ax[1].plot(degrees, R2_tst, label='R2 test')
+[[axi.grid(), axi.legend(), axi.set_yscale("log")] for axi in ax]
 plt.show()
