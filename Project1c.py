@@ -1,12 +1,11 @@
 from Project1b import *
 from sklearn.utils import resample
-from tqdm import trange
 
 ### Make coarse data with high order polynomial fits
 nx, ny = (10, 10)
-orders = [i for i in range(8)]
+orders = np.arange(13)
 
-x, y, z = make_Franke(nx, ny, noise = 0.1)
+x, y, z = make_Franke(nx, ny, noise = 0.1, seed=0)
 x_l, y_l, z_l, x_t, y_t, z_t = train_test_data_evenly(x, y, z, n=4) # l = learn, t = test
 X_l, X_t, beta, z_lm, z_tm = fit_OLS_SVD(orders, x_l, y_l, z_l, x_t, y_t, z_t) # m = model
 
@@ -30,10 +29,10 @@ plt.clf()
 ### Bias-variance analysis, based on code https://compphysics.github.io/MachineLearning/doc/LectureNotes/_build/html/chapter3.html#the-bias-variance-tradeoff
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+#from sklearn.preprocessing import PolynomialFeatures # doesn't work?
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
+#from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
 
 #from Project1b import FrankeFunction, create_X
@@ -41,7 +40,7 @@ np.random.seed(0)
 
 n = 625
 n_boostraps = 100
-maxdegree = 18
+maxdegree = 17
 
 # Make data set.
 x = np.arange(0, 1, 1.0/np.ceil(n**0.5))
@@ -62,7 +61,7 @@ polydegree = np.zeros(maxdegree)
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
 for degree in range(maxdegree):
-    #model = make_pipeline(LinearRegression(fit_intercept=False))
+    #model = make_pipeline(PolynomialFeatures(degree=degree), LinearRegression(fit_intercept=False))
     model = LinearRegression(fit_intercept=False)
     y_pred = np.empty((y_test.shape[0], n_boostraps))
     X_t = create_X(x_test[:, 0], x_test[:, 1], n=degree)
@@ -85,5 +84,5 @@ plt.plot(polydegree, error, label='Error')
 plt.plot(polydegree, bias, label='bias')
 plt.plot(polydegree, variance, label='Variance')
 plt.legend()
-plt.yscale('log')
+#plt.yscale('log')
 plt.show()

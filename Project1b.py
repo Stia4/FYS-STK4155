@@ -5,10 +5,6 @@ import numpy as np
 from sklearn.metrics import mean_squared_error as MSE_skl
 from sklearn.metrics import r2_score as R2_skl
 
-plt.rcParams["figure.figsize"] = (12, 8)
-plt.rcParams.update({'font.size': 16})
-np.random.seed(0)
-
 def FrankeFunction(x,y):
 	"""
 	Base function to which we fit the polynomials
@@ -89,7 +85,7 @@ def R2_Score(y, y_tilde):
 	"""
 	return 1 - np.sum((y[:-2]-y_tilde[:-2])**2)/np.sum((y[:-2]-np.average(y))**2)
 
-def make_Franke(nx, ny, noise = 0.0):
+def make_Franke(nx, ny, noise = 0.0, seed=None):
 	"""
 	Creates Franke surface for given number of points in x and y.
 	Optionally adds noise where the input is the fraction of the mean as standard deviation.
@@ -99,7 +95,7 @@ def make_Franke(nx, ny, noise = 0.0):
 	x_, y_ = np.meshgrid(x, y)
 
 	z = FrankeFunction(x_, y_)
-	z += np.random.normal(0, np.mean(z)*noise, z.shape) # Adding some normal noise
+	z += np.random.default_rng(seed).normal(0, np.mean(z)*noise, z.shape) # Adding some normal noise
 	z -= np.mean(z) # Centering the data
 	return x_, y_, z
 
@@ -138,9 +134,12 @@ def fit_OLS_SVD(orders, x_lrn, y_lrn, z_lrn, x_tst=None, y_tst=None, z_tst=None)
 	return X_lrn, beta_OLS, z_lrn_model
 
 def main_1b():
+	plt.rcParams["figure.figsize"] = (12, 8)
+	plt.rcParams.update({'font.size': 16})
+
 	### Make goal data
 	nx, ny = (50, 50)
-	x, y, z = make_Franke(nx, ny, noise = 0.1)
+	x, y, z = make_Franke(nx, ny, noise = 0.1, seed=0)
 
 	### Split data into training and test data, using ~25% as test data
 	test_size = 4 # Reserves 1/4 of the data as test data
