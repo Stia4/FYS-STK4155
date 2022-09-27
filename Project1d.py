@@ -1,4 +1,4 @@
-from Project1b import make_Franke, fit_OLS_SVD, MSE
+from Project1b import make_Franke, fit_OLS, MSE
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -36,28 +36,40 @@ def kfold(x, y, z, k, seed=None):
 
     return learn_set, test_set
 
-### Setting parameters
-nx, ny = (10, 10)
-k = 10
-orders = np.arange(13)
+def main_1d():
+    ### Setting parameters
+    nx, ny = (10, 10)
+    k = 10
+    orders = np.arange(13)
 
-### Generating data and splitting into k folds of learn/test data
-x, y, z = make_Franke(nx, ny, noise=0.1, seed=0)
-lrn, tst = kfold(x, y, z, k, seed=0)
+    ### Generating data and splitting into k folds of learn/test data
+    x, y, z = make_Franke(nx, ny, noise=0.1, seed=0)
+    lrn, tst = kfold(x, y, z, k, seed=0)
 
-### Iterating over folds
-running_MSE = np.zeros_like(orders, dtype=float)
-for i in range(k):
-    ## Fitting polynomials of all orders to fold i learn set, then applying to test data
-    z_tst_model = fit_OLS_SVD(orders, lrn[0, i], lrn[1, i], lrn[2, i],
-                                      tst[0, i], tst[1, i], tst[2, i])[-1]
-    
-    x_unshuffle = [np.where(x[0, :] == xi) for xi in tst[0, i]]
-    y_unshuffle = [np.where(y[:, 0] == yi) for yi in tst[1, i]]
-    z_data = z[x_unshuffle, y_unshuffle][:, 0, 0]
+    ### Iterating over folds
+    running_MSE = np.zeros_like(orders, dtype=float)
+    for i in range(k):
+        ## Fitting polynomials of all orders to fold i learn set, then applying to test data
+        z_tst_model = fit_OLS(orders, lrn[0, i], lrn[1, i], lrn[2, i],
+                                          tst[0, i], tst[1, i], tst[2, i])[-1]
+        
+        x_unshuffle = [np.where(x[0, :] == xi) for xi in tst[0, i]]
+        y_unshuffle = [np.where(y[:, 0] == yi) for yi in tst[1, i]]
+        z_data = z[x_unshuffle, y_unshuffle][:, 0, 0]
 
-    for j in orders:
-        running_MSE[j] += MSE(z_data, z_tst_model[j]) / k
+        for j in orders:
+            running_MSE[j] += MSE(z_data, z_tst_model[j]) / k
 
-plt.plot(orders, running_MSE)
-plt.show()
+    plt.plot(orders, running_MSE)
+    plt.hlines(0, min(orders), max(orders), colors="gray", linestyles="dashed")
+    plt.xticks(ticks=orders)
+    plt.xlabel("Polynome order")
+    plt.ylabel("Mean squared error")
+    plt.title(f"MSE for k-fold cross validation, k = {k}")
+    plt.grid(alpha = 0.3)
+    plt.yscale('log')
+    plt.tight_layout()
+    plt.show()
+
+if __name__ == "__main__":
+	main_1d()

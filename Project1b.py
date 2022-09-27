@@ -99,11 +99,11 @@ def make_Franke(nx, ny, noise = 0.0, seed=None):
 	z -= np.mean(z) # Centering the data
 	return x_, y_, z
 
-def fit_OLS_SVD(orders, x_lrn, y_lrn, z_lrn, x_tst=None, y_tst=None, z_tst=None):
+def fit_OLS(orders, x_lrn, y_lrn, z_lrn, x_tst=None, y_tst=None, z_tst=None):
 	"""
 	Calculates best fit model for given data, using the input orders.
 	Uses minimisation of Ordinary Least Squares to fit model, solved
-	analytically through using Singular Value Decomposition.
+	analytically through using the Moore–Penrose pseudo inverse of the design/model matrix.
 
 	Allows either input for both learn and test set, or just learn set.
 	"""
@@ -116,8 +116,7 @@ def fit_OLS_SVD(orders, x_lrn, y_lrn, z_lrn, x_tst=None, y_tst=None, z_tst=None)
 	z_lrn_model = dict()
 	for i in orders:
 		X_lrn[i] = create_X(x_lrn, y_lrn, i)
-		#X_lrn[i][:, 0] = 0
-		beta_OLS[i] = np.linalg.pinv(X_lrn[i].T @ X_lrn[i]) @ X_lrn[i].T @ z_lrn
+		beta_OLS[i] = np.linalg.pinv(X_lrn[i], rcond=0) @ z_lrn
 		z_lrn_model[i] = np.reshape(X_lrn[i] @ beta_OLS[i], z_lrn.shape)
 	
 	### If given, apply model to test-set as well
@@ -126,7 +125,6 @@ def fit_OLS_SVD(orders, x_lrn, y_lrn, z_lrn, x_tst=None, y_tst=None, z_tst=None)
 		z_tst_model = dict()
 		for i in orders:
 			X_tst[i] = create_X(x_tst, y_tst, i)
-			#X_tst[i][:, 0] = 0
 			z_tst_model[i] = np.reshape(X_tst[i] @ beta_OLS[i], z_tst.shape)
 		return X_lrn, X_tst, beta_OLS, z_lrn_model, z_tst_model
 
@@ -147,7 +145,7 @@ def main_1b():
 
 	### Make design matrix, calculate beta for OLS, and get model, orders 2 to 6 covered
 	orders = [2, 3, 4, 5, 6]
-	X_lrn, X_tst, beta_OLS, z_lrn_model, z_tst_model = fit_OLS_SVD(orders, x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst)
+	X_lrn, X_tst, beta_OLS, z_lrn_model, z_tst_model = fit_OLS(orders, x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst)
 
 	### Setting up figure name formats, saves to directory 'fig/'
 	figname = lambda name: f"fig/{name}_{min(orders)}-{max(orders)}_{len(x)}x{len(y)}.pdf"
