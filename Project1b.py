@@ -99,24 +99,37 @@ def make_Franke(nx, ny, noise = 0.0, seed=None):
 	z -= np.mean(z) # Centering the data
 	return x_, y_, z
 
+def SVDinv(A):
+	"""
+	Takes as input a numpy matrix A and returns inv(A) based on singular value decomposition (SVD).
+    SVD is numerically more stable than the inversion algorithms provided by
+    numpy and scipy.linalg at the cost of being slower.
+	"""
+	U, s, VT = np.linalg.svd(A)
+
+	#D = np.zeros((len(U),len(VT)))
+	D = np.diag(s)
+
+	UT = np.transpose(U)
+	V = np.transpose(VT)
+	invD = np.linalg.inv(D)
+
+	return np.matmul(V,np.matmul(invD,UT))
+
 def fit_OLS(orders, x_lrn, y_lrn, z_lrn, x_tst=None, y_tst=None, z_tst=None):
 	"""
-	Calculates best fit model for given data, using the input orders.
-	Uses minimisation of Ordinary Least Squares to fit model, solved
-	analytically through using the Moore–Penrose pseudo inverse of the design/model matrix.
-
+	Calculates best fit model for given data, using the input polynomial orders.
+	Uses minimisation of Ordinary Least Squares to fit model, and Singular Value
+	Decomposition to find inverse/pseudo-inverse.
 	Allows either input for both learn and test set, or just learn set.
 	"""
-	if type(orders) == int:
-		orders = [orders]
-
 	### Calculate model fit using learn-set
 	X_lrn = dict()
 	beta_OLS = dict()
 	z_lrn_model = dict()
 	for i in orders:
 		X_lrn[i] = create_X(x_lrn, y_lrn, i)
-		beta_OLS[i] = np.linalg.pinv(X_lrn[i], rcond=0) @ z_lrn
+		beta_OLS[i] = SVDinv(X_lrn[i].T @ X_lrn[i]) @ X_lrn[i].T @ z_lrn
 		z_lrn_model[i] = np.reshape(X_lrn[i] @ beta_OLS[i], z_lrn.shape)
 	
 	### If given, apply model to test-set as well
