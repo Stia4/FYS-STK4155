@@ -69,7 +69,7 @@ def Bootstrap_pred(x_l, x_t, y_l, y_t, z_l, z_t, n_bootstraps, maxdegree, lam=0.
     for degree in range(maxdegree):
         X_t = create_X(x_t, y_t, n=degree)
         for i in range(n_bootstraps):
-            x_lr, y_lr, z_lr = resample(x_l, y_l, z_l, random_state = 0 + degree*n_bootstraps + i)
+            x_lr, y_lr, z_lr = resample(x_l, y_l, z_l, random_state = 0 + degree*n_bootstraps + i) # Manually set RNG to get different bootstraps, but consistent result
             z_pred[degree, :, i] = X_t @ fit_Ridge([degree], lam, x_lr, y_lr, z_lr)[1][degree]
     return z_pred
 
