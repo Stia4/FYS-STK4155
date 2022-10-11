@@ -182,7 +182,7 @@ def main_1b():
 	plt.grid(alpha = 0.3)
 	plt.tight_layout()
 	plt.savefig(figname("Beta"), format="pdf")
-	plt.clf()
+	plt.show()
 
 	### Check fit using MSE and R2, printing as a nice table, using both our and sklearn's MSE/R2 functions
 	header  = "".join(["|{:^10d}".format(i) for i in orders])
@@ -216,7 +216,7 @@ def main_1b():
 	plt.grid(alpha = 0.3)
 	plt.tight_layout()
 	plt.savefig(figname("MSE"), format="pdf")
-	plt.clf()
+	plt.show()
 
 	plt.plot(orders, R2_lrn, "o-", label="R2 Score Training data")
 	plt.plot(orders, R2_tst, "o-", label="R2 Score Test data")
@@ -228,7 +228,7 @@ def main_1b():
 	plt.tight_layout()
 	plt.grid(alpha = 0.3)
 	plt.savefig(figname("R2"), format="pdf")
-	plt.clf()
+	plt.show()
 
 	### Make plot(s) of surfaces, both data and polynomials
 	ratio = np.array([2, 3], dtype=int) # Grid ratio ratio[0]/ratio[1] (integers!), e.g. screen ratio 16/9 would be [9, 16]
@@ -254,7 +254,7 @@ def main_1b():
 		ax.view_init(*view)
 	fig.suptitle("Model applied to entire set")
 	fig.tight_layout()
-	plt.savefig(figname("Surfaces"), format="pdf")
+	plt.savefig(figname("Surfaces"), format="pdf"); plt.show()
 	plt.close(fig) # Messes with later figures unless closed
 
 	### Coefficient comparison with errorbars?
@@ -271,7 +271,7 @@ def main_1b():
 	plt.grid(alpha = 0.3)
 	plt.legend()
 	plt.savefig(figname("Errorbars"), format="pdf")
-	plt.clf()
+	plt.show()
 
 if __name__ == "__main__":
 	main_1b()
