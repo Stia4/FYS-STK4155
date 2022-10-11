@@ -236,7 +236,7 @@ def main_1b():
 	plt.savefig(figname("R2"), format="pdf")
 	plt.show()
 	### Make plot(s) of surfaces, both data and polynomials
-	ratio = np.array([2, 3], dtype=int) # Grid ratio ratio[0]/ratio[1] (integers!), e.g. screen ratio 16/9 would be 
+	ratio = np.array([2, 3], dtype=int) # Grid ratio ratio[0]/ratio[1] (integers!), e.g. screen ratio 16/9 would be
 	dims = ratio * int(np.ceil(np.sqrt((len(orders)+1)/(ratio[0]*ratio[1])))) # Elements to place in x/y to best match ratio
 	view = [30, 90] # Viewing angle in degrees, [height, rotation]
 	fig = plt.figure(figsize=plt.figaspect(ratio[0]/ratio[1]))
@@ -261,7 +261,7 @@ def main_1b():
 	plt.savefig(figname("Surfaces"), format="pdf")
 	#plt.close(fig) # Messes with later figures unless closed
 	plt.show()
-    
+
 	### Coefficient comparison with errorbars?
 	err = dict()
 	var_noise = dict()
