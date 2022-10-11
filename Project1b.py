@@ -183,13 +183,7 @@ def main_1b():
 	plt.grid(alpha = 0.3)
 	plt.tight_layout()
 	plt.savefig(figname("Beta"), format="pdf")
-<<<<<<< HEAD
 	plt.show()
-
-=======
-	#plt.clf()
-	plt.show()
->>>>>>> 605f76dadc25ec852d9f3113a7498fa1d3c79afc
 	### Check fit using MSE and R2, printing as a nice table, using both our and sklearn's MSE/R2 functions
 	header  = "".join(["|{:^10d}".format(i) for i in orders])
 	MSE_lrn = [     MSE(z_lrn, z_lrn_model[i]) for i in orders]
@@ -228,10 +222,6 @@ def main_1b():
 	plt.grid(alpha = 0.3)
 	plt.tight_layout()
 	plt.savefig(figname("MSE"), format="pdf")
-<<<<<<< HEAD
-=======
-	#ßplt.clf()
->>>>>>> 605f76dadc25ec852d9f3113a7498fa1d3c79afc
 	plt.show()
 
 	plt.plot(orders, R2_lrn, "o-", label="R2 Score Training data")
@@ -247,16 +237,10 @@ def main_1b():
 	plt.grid(alpha = 0.3)
 	plt.savefig(figname("R2"), format="pdf")
 	plt.show()
-<<<<<<< HEAD
-=======
-	#plt.clf()
->>>>>>> 605f76dadc25ec852d9f3113a7498fa1d3c79afc
-
 	### Make plot(s) of surfaces, both data and polynomials
-	ratio = np.array([2, 3], dtype=int) # Grid ratio ratio[0]/ratio[1] (integers!), e.g. screen ratio 16/9 would be [9, 16]
+	ratio = np.array([2, 3], dtype=int) # Grid ratio ratio[0]/ratio[1] (integers!), e.g. screen ratio 16/9 would be 
 	dims = ratio * int(np.ceil(np.sqrt((len(orders)+1)/(ratio[0]*ratio[1])))) # Elements to place in x/y to best match ratio
 	view = [30, 90] # Viewing angle in degrees, [height, rotation]
-
 	fig = plt.figure(figsize=plt.figaspect(ratio[0]/ratio[1]))
 	ax = fig.add_subplot(*dims, 1, projection='3d')
 	ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
@@ -276,15 +260,10 @@ def main_1b():
 		ax.view_init(*view)
 	fig.suptitle("Model applied to entire set")
 	fig.tight_layout()
-<<<<<<< HEAD
-	plt.savefig(figname("Surfaces"), format="pdf"); plt.show()
-	plt.close(fig) # Messes with later figures unless closed
-=======
 	plt.savefig(figname("Surfaces"), format="pdf")
 	#plt.close(fig) # Messes with later figures unless closed
 	plt.show()
->>>>>>> 605f76dadc25ec852d9f3113a7498fa1d3c79afc
-
+    
 	### Coefficient comparison with errorbars?
 	err = dict()
 	var_noise = dict()
@@ -300,10 +279,6 @@ def main_1b():
 	plt.grid(alpha = 0.3)
 	plt.legend()
 	plt.savefig(figname("Errorbars"), format="pdf")
-<<<<<<< HEAD
-=======
-	#plt.clf()
->>>>>>> 605f76dadc25ec852d9f3113a7498fa1d3c79afc
 	plt.show()
 
 if __name__ == "__main__":

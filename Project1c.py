@@ -42,9 +42,10 @@ def Bootstrap(x, y, n_bootstraps, maxdegree, mindegree=0, step=1, silent=False):
 
         y_pred = np.empty((y_test.shape[0], n_bootstraps))
         for i in range(n_bootstraps):
-            #x_, y_ = resample(x_train, y_train, random_state = 0 + degree*n_bootstraps + i)
-            x_ = x_train[np.random.randint(0,n,n)]
-            y_ = y_train[np.random.randint(0,n,n)]
+            x_, y_ = resample(x_train, y_train, random_state = 0 + degree*n_bootstraps + i)
+            #x_ = x_train[np.random.randint(0,n,n)]
+            #y_ = y_train[np.random.randint(0,n,n)]
+            
             y_pred[:, i] = X_t @ fit_OLS([degree], x_[:, 0], x_[:, 1], y_[:, 0])[1][degree]
 
         #degrees[degree] = degree
