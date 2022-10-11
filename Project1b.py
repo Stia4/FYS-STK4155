@@ -150,7 +150,7 @@ def main_1b():
 	plt.rcParams.update({'font.size': 16})
 
 	### Make goal data
-	nx, ny = (50, 50)
+	nx, ny = (30, 30)
 	x, y, z = make_Franke(nx, ny, noise = 0.1, seed=0)
 
 	### Split data into training and test data, using ~25% as test data
@@ -196,13 +196,11 @@ def main_1b():
 	R2_tst_skl  = [ R2_skl(z_tst, z_tst_model[i]) for i in orders]
 	print("\n learn  " + header)
 	print("MSE     "+"".join(["|{:^10.2e}".format(MSE) for MSE in     MSE_lrn])       )
-	#print("MSE_min "+"".join(["|{:^10.2e}".format(np.min(MSE)) for MSE in     MSE_lrn])       )
 	print("MSE_skl "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_lrn_skl])       )
 	print("R2      "+"".join(["|{:^10.2e}".format( R2) for  R2 in      R2_lrn])       )
 	print("R2_skl  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_lrn_skl]) + "\n")
 	print("  test  " + header)
 	print("MSE     "+"".join(["|{:^10.2e}".format(MSE) for MSE in     MSE_tst])       )
-	print("MSE_min "+"".join(["|{:^10.2e}".format(np.min(MSE)) for MSE in     MSE_lrn])       )
 	print("MSE_skl "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_tst_skl])       )
 	print("R2      "+"".join(["|{:^10.2e}".format( R2) for  R2 in      R2_tst])       )
 	print("R2_skl  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_tst_skl]) + "\n")
@@ -212,7 +210,7 @@ def main_1b():
 	### Plotting the MSE/R2 as function of polynomial degree
 	plt.plot(orders, MSE_lrn, "o-", label="MSE Training data")
 	plt.plot(orders, MSE_tst, "o-", label="MSE Test data")
-	plt.hlines(min(MSE_tst), min(orders), max(orders), colors="gray", linestyles="dashed",label="$MSE_{min}$")
+	#plt.hlines(min(MSE_tst), min(orders), max(orders), colors="gray", linestyles="dashed",label="$MSE_{min}$")
 	#plt.hlines(0, min(orders), max(orders), colors="blue", linestyles="dashed")
 	plt.xticks(ticks=orders)
 	plt.xlabel("Polynomial order")
