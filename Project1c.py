@@ -4,10 +4,11 @@ import numpy as np
 from sklearn.utils import resample
 #from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
 from scipy import linalg
 
-def Bootstrap(x, y, n_bootstraps, maxdegree, silent=False):
+def Bootstrap(x, y, n_bootstraps, maxdegree, mindegree=0, step=1, silent=False):
     """
     Code based on:
     https://compphysics.github.io/MachineLearning/doc/LectureNotes/_build/html/chapter3.html#the-bias-variance-tradeoff
@@ -26,30 +27,38 @@ def Bootstrap(x, y, n_bootstraps, maxdegree, silent=False):
     # bias0     = np.mean((y_test[:, 0] - np.mean(y_pred, axis=2))**2, axis=1)
     # variance0 = np.mean(np.var(y_pred, axis=2), axis=1)
 
-    error = np.zeros(maxdegree)
-    bias = np.zeros(maxdegree)
-    variance = np.zeros(maxdegree)
-    degrees = np.zeros(maxdegree)
-
-    for degree in range(maxdegree):
+    degrees = np.arange(mindegree, maxdegree)[::step]
+    
+    error = np.zeros(len(degrees))
+    bias = np.zeros(len(degrees))
+    variance = np.zeros(len(degrees))
+    #degrees = np.zeros(maxdegree)
+    n = len(y_train)
+    
+    for j in tqdm(range(len(degrees))):
+        degree = degrees[j]
+        
         X_t = create_X(x_test[:, 0], x_test[:, 1], n=degree)
 
         y_pred = np.empty((y_test.shape[0], n_bootstraps))
         for i in range(n_bootstraps):
             x_, y_ = resample(x_train, y_train, random_state = 0 + degree*n_bootstraps + i)
+            #x_ = x_train[np.random.randint(0,n,n)]
+            #y_ = y_train[np.random.randint(0,n,n)]
+            
             y_pred[:, i] = X_t @ fit_OLS([degree], x_[:, 0], x_[:, 1], y_[:, 0])[1][degree]
 
-        degrees[degree] = degree
-        error[degree] = np.mean( np.mean((y_test - y_pred)**2, axis=1, keepdims=True) )
-        bias[degree] = np.mean( (y_test - np.mean(y_pred, axis=1, keepdims=True))**2 )
-        variance[degree] = np.mean( np.var(y_pred, axis=1, keepdims=True) )
+        #degrees[degree] = degree
+        error[j] = np.mean( np.mean((y_test - y_pred)**2, axis=1, keepdims=True) )
+        bias[j] = np.mean( (y_test - np.mean(y_pred, axis=1, keepdims=True))**2 )
+        variance[j] = np.mean( np.var(y_pred, axis=1, keepdims=True) )
 
         if not silent:
             print('Polynomial degree:', degree)
-            print('Error:', error[degree])
-            print('Bias^2:', bias[degree])
-            print('Var:', variance[degree])
-            print('{} >= {} + {} = {}'.format(error[degree], bias[degree], variance[degree], bias[degree]+variance[degree]))
+            print('Error:', error[j])
+            print('Bias^2:', bias[j])
+            print('Var:', variance[j])
+            print('{} >= {} + {} = {}'.format(error[j], bias[j], variance[j], bias[j]+variance[j]))
 
     # print(error - error0)
     # print(bias - bias0)
