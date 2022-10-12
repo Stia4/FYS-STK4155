@@ -2,7 +2,6 @@ from Project1b import make_Franke, train_test_data_evenly, fit_OLS, MSE, create_
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.utils import resample
-#from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
@@ -15,24 +14,11 @@ def Bootstrap(x, y, n_bootstraps, maxdegree, mindegree=0, step=1, silent=False):
     """
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
 
-    # degrees = np.arange(maxdegree)
-    # X_t = [create_X(x_test[:, 0], x_test[:, 1], n=i) for i in degrees]
-    # y_pred = np.empty((maxdegree, y_test.shape[0], n_bootstraps))
-    # for i in range(n_bootstraps):
-    #     x_, y_ = resample(x_train, y_train, random_state = 0 + i)
-    #     beta = fit_OLS(degrees, x_[:, 0], x_[:, 1], y_[:, 0])[1]
-    #     y_pred[:, :, i] = [X_t[j] @ beta[j] for j in degrees]
-
-    # error0    = np.mean((y_test - y_pred)**2, axis=(1, 2))
-    # bias0     = np.mean((y_test[:, 0] - np.mean(y_pred, axis=2))**2, axis=1)
-    # variance0 = np.mean(np.var(y_pred, axis=2), axis=1)
-
     degrees = np.arange(mindegree, maxdegree)[::step]
     
     error = np.zeros(len(degrees))
     bias = np.zeros(len(degrees))
     variance = np.zeros(len(degrees))
-    #degrees = np.zeros(maxdegree)
     n = len(y_train)
     
     for j in tqdm(range(len(degrees))):
@@ -42,13 +28,9 @@ def Bootstrap(x, y, n_bootstraps, maxdegree, mindegree=0, step=1, silent=False):
 
         y_pred = np.empty((y_test.shape[0], n_bootstraps))
         for i in range(n_bootstraps):
-            x_, y_ = resample(x_train, y_train, random_state = 0 + degree*n_bootstraps + i)
-            #x_ = x_train[np.random.randint(0,n,n)]
-            #y_ = y_train[np.random.randint(0,n,n)]
-            
+            x_, y_ = resample(x_train, y_train, random_state = 0 + degree*n_bootstraps + i)            
             y_pred[:, i] = X_t @ fit_OLS([degree], x_[:, 0], x_[:, 1], y_[:, 0])[1][degree]
 
-        #degrees[degree] = degree
         error[j] = np.mean( np.mean((y_test - y_pred)**2, axis=1, keepdims=True) )
         bias[j] = np.mean( (y_test - np.mean(y_pred, axis=1, keepdims=True))**2 )
         variance[j] = np.mean( np.var(y_pred, axis=1, keepdims=True) )
@@ -59,10 +41,6 @@ def Bootstrap(x, y, n_bootstraps, maxdegree, mindegree=0, step=1, silent=False):
             print('Bias^2:', bias[j])
             print('Var:', variance[j])
             print('{} >= {} + {} = {}'.format(error[j], bias[j], variance[j], bias[j]+variance[j]))
-
-    # print(error - error0)
-    # print(bias - bias0)
-    # print(variance - variance0)
 
     return bias, variance, error, degrees
 
