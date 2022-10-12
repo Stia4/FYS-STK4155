@@ -103,8 +103,8 @@ def make_Franke(nx, ny, noise = 0.0, seed=None):
 def SVDinv(A):
 	"""
 	Takes as input a numpy matrix A and returns inv(A) based on singular value decomposition (SVD).
-    SVD is numerically more stable than the inversion algorithms provided by
-    numpy and scipy.linalg at the cost of being slower.
+	SVD is numerically more stable than the inversion algorithms provided by
+    	numpy and scipy.linalg at the cost of being slower.
 	"""
 	U, s, VT = np.linalg.svd(A)
 
@@ -158,7 +158,7 @@ def main_1b():
 	x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst = train_test_data_evenly(x, y, z, test_size)
 
 	### Make design matrix, calculate beta for OLS, and get model, orders 2 to 6 covered
-	orders = [0,1,2, 3, 4, 5]
+	orders = [1, 2, 3, 4, 5]
 	X_lrn, X_tst, beta_OLS, z_lrn_model, z_tst_model = fit_OLS(orders, x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst)
 
 	### Setting up figure name formats, saves to directory 'fig/'
