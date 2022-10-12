@@ -59,9 +59,7 @@ def main_1d():
 
     print("MSE min for {}x{} points, CV: {}".format(nx, ny, min(running_MSE_tst)))
 
-    # plt.rcParams["figure.figsize"] = (12, 8)
-
-    figname = lambda name: f"img_d/{name}_{min(orders)}-{max(orders)}_{nx}x{ny}.pdf"
+    figname = lambda name: f"fig/{name}_{min(orders)}-{max(orders)}_{nx}x{ny}.pdf"
 
     plt.plot(orders, running_MSE_lrn, "o-", label="MSE Training data")
     plt.plot(orders, running_MSE_tst, "o-", label="MSE Test data")
