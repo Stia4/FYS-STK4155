@@ -305,7 +305,7 @@ if __name__ == "__main__":
 
     # Multiple learning rates
     etas = np.logspace(-4, -1, 20)
-    epochs = 10
+    epochs = 100
     epoch_step = 1
     MSE = np.zeros((len(etas), int(epochs/epoch_step)))
     NN = NeuralNetwork(input_nodes=1)
@@ -323,12 +323,7 @@ if __name__ == "__main__":
         for j in range(int(epochs/epoch_step)):
             NN.train(x_l, t_l, epochs=epoch_step, seed=seed, silent=True)
             MSE[i][j] = np.mean((NN.test(x_t) - t_t)**2)
-    # for i, eta in tqdm(enumerate(etas)):
-    #     NN.reset_parameters() # Re-initialize weights/biases for each eta
-    #     NN.set_LearningRate(eta=eta, method=None)
-    #     for j in range(int(epochs/epoch_step)):
-    #         NN.train(x, t, epochs=epoch_step, seed=seed, silent=True)
-    #         MSE[i][j] = np.mean((NN.test(x) - t)**2)
+
     MSE = np.nan_to_num(MSE, nan=np.nan, posinf=np.nan, neginf=np.nan)
     plt.contourf(np.log10(MSE), levels=25, extent=[0, epochs, np.log10(etas[0]), np.log10(etas[-1])])
     plt.colorbar(label=r"log$_{10}$(MSE)")
@@ -337,10 +332,17 @@ if __name__ == "__main__":
     plt.show()
 
     # 2D data
+    def FrankeFunction(x,y):
+        term1 =  0.75*np.exp(-(9*x-2)**2/4.00 - (9*y-2)**2/4.00)
+        term2 =  0.75*np.exp(-(9*x+1)**2/49.0 - (9*y+1)   /10.0)
+        term3 =  0.50*np.exp(-(9*x-7)**2/4.00 - (9*y-3)**2/4.00)
+        term4 = -0.20*np.exp(-(9*x-4)**2      - (9*y-7)**2     )
+        return term1 + term2 + term3 + term4
+
     nx, ny = 20, 20
     X,Y = np.meshgrid(np.linspace(0, 1, nx+1, dtype=float),
                       np.linspace(0, 1, ny+1, dtype=float))
-    Z = 1 - ((X-0.5)**2 + (Y-0.5)**2)
+    Z = FrankeFunction(X, Y)
     x = np.array(list(zip(X.flatten(), Y.flatten())))
     t = Z.flatten().reshape(-1, 1)
 
@@ -358,5 +360,6 @@ if __name__ == "__main__":
     ax1 = fig.add_subplot(1, 2, 2, projection='3d')
     surf = ax0.plot_surface(X, Y, Z)
     surf = ax1.plot_surface(X, Y, Z_model)
+    ax0.view_init(30, 90)
+    ax1.view_init(30, 90)
     plt.show()
-

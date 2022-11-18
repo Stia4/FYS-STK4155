@@ -232,122 +232,122 @@ if __name__ == "__main__": # If program is run directly (as opposed to being imp
         simple_function = lambda x: a0 + a1*x + a2*x*x
         return simple_function
 
-    # # Making data, simple 1D 2nd order polynomial
-    # x = np.linspace(0, 1, 30)
-    # beta = [0, -1, 2]
-    # f = make_simple_function(*beta)
-    # t = f(x)
+    # Making data, simple 1D 2nd order polynomial
+    x = np.linspace(0, 1, 30)
+    beta = [0, -1, 2]
+    f = make_simple_function(*beta)
+    t = f(x)
     
-    # # Adding some slight noise to the data
-    # RNG = np.random.default_rng(seed=0)
-    # t += RNG.normal(0, max(abs(t))*0.05, size=len(t))
+    # Adding some slight noise to the data
+    RNG = np.random.default_rng(seed=0)
+    t += RNG.normal(0, max(abs(t))*0.05, size=len(t))
 
-    # # Using params dictionary to easily modify single input parameters later
-    # params = {'order': 2, 'x': x, 'y': t,
-    #           'costfunc': "OLS", 'lam': 1e-15,
-    #           'maxiter': 1e6, 'convergence_threshold': 1e-10,
-    #           'beta': None, 'eta': 1e-2, 
-    #           'adaptive_method': None, 'delta': 1e-8, 'rho': 0.9, 'rho2': 0.999,
-    #           'autograd': False,
-    #           'momentum': 0.0,
-    #           'batch_size': 0, 'n_epochs': 0, 'min_grad': True,
-    #           'silent': False}
-    # X, beta_model = polyFit(**params)
+    # Using params dictionary to easily modify single input parameters later
+    params = {'order': 2, 'x': x, 'y': t,
+              'costfunc': "OLS", 'lam': 1e-15,
+              'maxiter': 1e6, 'convergence_threshold': 1e-10,
+              'beta': None, 'eta': 1e-2, 
+              'adaptive_method': None, 'delta': 1e-8, 'rho': 0.9, 'rho2': 0.999,
+              'autograd': False,
+              'momentum': 0.0,
+              'batch_size': 0, 'n_epochs': 0, 'min_grad': True,
+              'silent': False}
+    X, beta_model = polyFit(**params)
 
-    # print("Real function coefficients:", beta)
-    # print("Model function coefficients:", beta_model)
+    print("Real function coefficients:", beta)
+    print("Model function coefficients:", beta_model)
 
-    # plt.plot(x, t, ".k", label="Data")
-    # plt.plot(x, X @ beta_model, label=f"Model, deg={params['order']:d}")
-    # plt.title("Regression of polynomial features to data")
-    # plt.xlabel("x")
-    # plt.ylabel("y")
-    # plt.legend()
-    # plt.savefig("fig/simpleGD.pdf", format="pdf")
-    # plt.show()
+    plt.plot(x, t, ".k", label="Data")
+    plt.plot(x, X @ beta_model, label=f"Model, deg={params['order']:d}")
+    plt.title("Regression of polynomial features to data")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.savefig("figures/simpleGD.pdf", format="pdf")
+    plt.show()
 
     #############################
     ### Coefficient evolution ###
     #############################
 
-    # params['maxiter'] = 10     # Number of steps between each time we save beta
-    # params['silent'] = True    # Avoid filling console with text
-    # params['min_grad'] = False # Do all iterations, no early exit
+    params['maxiter'] = 10     # Number of steps between each time we save beta
+    params['silent'] = True    # Avoid filling console with text
+    params['min_grad'] = False # Do all iterations, no early exit
 
-    # ### Tracking changes in coefficients
-    # max_maxiters = int(5e3) # Number of betas to save
-    # beta_list = np.zeros((2, max_maxiters, params['order']+1))
-    # for i in range(max_maxiters):
-    #     X, beta_model = polyFit(**params) # Do fit for a few steps
-    #     beta_list[0, i, :] = beta_model     # Then save current beta
-    #     params['beta'] = beta_list[0, i, :] # And use it as a start for the next cycle
+    ### Tracking changes in coefficients
+    max_maxiters = int(5e3) # Number of betas to save
+    beta_list = np.zeros((2, max_maxiters, params['order']+1))
+    for i in range(max_maxiters):
+        X, beta_model = polyFit(**params) # Do fit for a few steps
+        beta_list[0, i, :] = beta_model     # Then save current beta
+        params['beta'] = beta_list[0, i, :] # And use it as a start for the next cycle
 
-    # ### Doing the same again with added momentum
-    # params['momentum'] = 0.80
-    # params['beta'] = None
-    # for i in range(max_maxiters):
-    #     X, beta_model = polyFit(**params)
-    #     beta_list[1, i, :] = beta_model
-    #     params['beta'] = beta_list[1, i, :]
+    ### Doing the same again with added momentum
+    params['momentum'] = 0.80
+    params['beta'] = None
+    for i in range(max_maxiters):
+        X, beta_model = polyFit(**params)
+        beta_list[1, i, :] = beta_model
+        params['beta'] = beta_list[1, i, :]
 
-    # ### Plotting
-    # fig, ax = plt.subplots(1, params['order']+1)
-    # fig.set_figheight(5)
-    # fig.set_figwidth(15)
-    # iters = np.arange(max_maxiters) * params['maxiter']
-    # for i in range(params['order']+1):
-    #     ax[i].plot(iters, beta_list[0, :, i], color="C0", label="GD")
-    #     ax[i].plot(iters, beta_list[1, :, i], color="C1", label="GD w/80% momentum")
-    #     try:
-    #         ax[i].hlines(beta[i], xmin=min(iters), xmax=max(iters), colors="black", linestyles="--", label=r"$\beta$")
-    #     except:
-    #         pass
-    #     ax[i].title.set_text(f"Coefficient {i}")
-    # handles, labels = ax[0].get_legend_handles_labels()
-    # fig.supxlabel('# of iterations')
-    # fig.supylabel('Coefficient value')
-    # fig.legend(handles, labels, loc = (0.8, 0.2))
-    # fig.tight_layout()
-    # plt.savefig("fig/betaConvergence.pdf", format="pdf")
-    # plt.show()
+    ### Plotting
+    fig, ax = plt.subplots(1, params['order']+1)
+    fig.set_figheight(5)
+    fig.set_figwidth(15)
+    iters = np.arange(max_maxiters) * params['maxiter']
+    for i in range(params['order']+1):
+        ax[i].plot(iters, beta_list[0, :, i], color="C0", label="GD")
+        ax[i].plot(iters, beta_list[1, :, i], color="C1", label="GD w/80% momentum")
+        try:
+            ax[i].hlines(beta[i], xmin=min(iters), xmax=max(iters), colors="black", linestyles="--", label=r"$\beta$")
+        except:
+            pass
+        ax[i].title.set_text(f"Coefficient {i}")
+    handles, labels = ax[0].get_legend_handles_labels()
+    fig.supxlabel('# of iterations')
+    fig.supylabel('Coefficient value')
+    fig.legend(handles, labels, loc = (0.8, 0.2))
+    fig.tight_layout()
+    plt.savefig("figures/betaConvergence.pdf", format="pdf")
+    plt.show()
 
     #############################################
     ### Learning rate / Ridge parameter space ###
     #############################################
 
-    # sns.set(font_scale=1.9)
+    sns.set(font_scale=1.9)
 
-    # params['maxiter'] = 1000
-    # params['costfunc'] = 'Ridge'
-    # params['adaptive_method'] = "Adam"
-    # params['momentum'] = 0
-    # params['beta'] = None
+    params['maxiter'] = 1000
+    params['costfunc'] = 'Ridge'
+    params['adaptive_method'] = "Adam"
+    params['momentum'] = 0
+    params['beta'] = None
 
-    # lambdas = np.logspace(-5, 1, 7)
-    # etas    = np.logspace(-5, 1, 7)
+    lambdas = np.logspace(-5, 1, 7)
+    etas    = np.logspace(-5, 1, 7)
     
-    # accuracy = np.zeros((len(etas), len(lambdas)))
-    # Ridge = lambda X, beta, lam: np.mean((X @ beta - f(x))**2) + lam*np.mean(beta**2)
+    accuracy = np.zeros((len(etas), len(lambdas)))
+    Ridge = lambda X, beta, lam: np.mean((X @ beta - f(x))**2) + lam*np.mean(beta**2)
 
-    # for i, eta in enumerate(etas):
-    #     for j, lam in enumerate(lambdas):
-    #         params['eta'] = eta
-    #         params['lam'] = lam
-    #         X, beta_model = polyFit(**params)
-    #         accuracy[i, j] = Ridge(X, beta_model, lam)
+    for i, eta in enumerate(etas):
+        for j, lam in enumerate(lambdas):
+            params['eta'] = eta
+            params['lam'] = lam
+            X, beta_model = polyFit(**params)
+            accuracy[i, j] = Ridge(X, beta_model, lam)
 
-    # accuracy = np.nan_to_num(accuracy, nan=np.nan, posinf=np.nan, neginf=np.nan) # Seaborn dislikes infinities
-    # accuracy = np.log10(accuracy)                                                # More readable format
+    accuracy = np.nan_to_num(accuracy, nan=np.nan, posinf=np.nan, neginf=np.nan) # Seaborn dislikes infinities
+    accuracy = np.log10(accuracy)                                                # More readable format
 
-    # fig, ax = plt.subplots(figsize = (12, 10))
-    # sns.heatmap(accuracy, annot=True, ax=ax, cmap="viridis", cbar_kws={'label':r'log$_{10}$(Cost)'})
-    # ax.set_title(f"Cost after {params['maxiter']} steps, {params['adaptive_method']} adaptive learning rate")
-    # ax.set_ylabel("Learning rate $\eta$")
-    # ax.set_yticklabels([r'$10^{'+f'{int(np.log10(eta))}'+r'}$' for eta in etas])
-    # ax.set_xlabel("Ridge parameter $\lambda$")
-    # ax.set_xticklabels([r'$10^{'+f'{int(np.log10(lam))}'+r'}$' for lam in lambdas])
-    # plt.savefig("fig/eta_lambda_heatmap.pdf", format="pdf")
-    # plt.show()
+    fig, ax = plt.subplots(figsize = (12, 10))
+    sns.heatmap(accuracy, annot=True, ax=ax, cmap="viridis", cbar_kws={'label':r'log$_{10}$(Cost)'})
+    ax.set_title(f"Cost after {params['maxiter']} steps, {params['adaptive_method']} adaptive learning rate")
+    ax.set_ylabel("Learning rate $\eta$")
+    ax.set_yticklabels([r'$10^{'+f'{int(np.log10(eta))}'+r'}$' for eta in etas])
+    ax.set_xlabel("Ridge parameter $\lambda$")
+    ax.set_xticklabels([r'$10^{'+f'{int(np.log10(lam))}'+r'}$' for lam in lambdas])
+    plt.savefig("figures/eta_lambda_heatmap.pdf", format="pdf")
+    plt.show()
 
     ##########################
     ### Testing parameters ###

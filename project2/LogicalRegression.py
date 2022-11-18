@@ -1,4 +1,4 @@
-from NeuralNetwork import NeuralNetwork
+from src.NeuralNetwork import NeuralNetwork
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -33,8 +33,14 @@ ax.set_title("Logistic regression confusion matrix")
 ax.set_ylabel("True value")
 ax.set_xlabel("Network output")
 plt.tight_layout()
-plt.savefig("fig/logistic.pdf", format="pdf")
+plt.savefig("figures/logistic.pdf", format="pdf")
 plt.show()
 
 acc = sum(y == t_test) / len(t_test)
 print("Total accuracy:", acc)
+
+# from sklearn.linear_model import LogisticRegression
+# logreg = LogisticRegression(penalty='none', max_iter=10000)
+# logreg.fit(X_train, t_train)
+# acc_skl = logreg.score(X_test, t_test)
+# print("Sklearn accuracy:", acc_skl)

@@ -1,4 +1,4 @@
-from NeuralNetwork import NeuralNetwork
+from src.NeuralNetwork import NeuralNetwork
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -36,7 +36,7 @@ ax.set_title("Classification confusion matrix")
 ax.set_ylabel("True value")
 ax.set_xlabel("Network output")
 plt.tight_layout()
-plt.savefig("fig/classification.pdf", format="pdf")
+plt.savefig("figures/classification.pdf", format="pdf")
 plt.show()
 
 acc = sum(y == t_test) / len(t_test)
