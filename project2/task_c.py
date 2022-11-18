@@ -114,28 +114,6 @@ def param_test(create_data):
 	print("R2 score for OLS with order %i 	: %.4f" % (order, r2_f(z_tst, z_OLS)))	
 
 
-
-	#run_grid(gamma=np.logspace(0,-4,5), eta=np.logspace(-2,-3,5), name = "RELU_RANDOM", init="Random", act_func_hid=RELU(), create_data=create_data)
-	# - Usually explodes, must have very low learning rate and high number of epochs...
-	
-	#run_grid(gamma=np.logspace(0,-4,5), eta=np.logspace(-1,-3,5), name = "RELU_HE", init="He", act_func_hid=RELU(), create_data=create_data)
-	# MSE 0.01, eta 0.1, gamma 0.0001, epochs 629
-	# Get better MSE with less epochs	
-
-	#run_grid(gamma=np.logspace(0,-4, 5), eta=np.logspace(-1,-5,5), name = "RELU_XAVIER", init="Xavier", act_func_hid=RELU(), create_data=create_data)
-	# MSE 0.017, eta 0.1, gamma 0.0001, epochs 684	
-	# Worse MSE, need higher learning rate, but this causes model to diverge
-		
-	#run_grid(gamma=np.logspace(1,-3, 5), eta=np.logspace(-3,-6,5), name = "LRELU_RANDOM", init="Random", act_func_hid=LRELU(), create_data=create_data)
-	# Explodes
-
-	#run_grid(gamma=np.logspace(1,-2, 5), eta=np.linspace(0.117,0.08, 5), name = "LRELU_HE", init="He", act_func_hid=LRELU(), create_data=create_data)	
-	# MSE 0.01, eta 0.1, gamma 1e-3
-	
-	#run_grid(gamma=np.logspace(0,-4, 5), eta=np.logspace(-1,-5,5), name = "LRELU_XAVIER", init="Xavier", act_func_hid=LRELU(), create_data=create_data)
-
-
-
 	#plt.rcParams["figure.figsize"] = (10,5)
 	fig, ax = plt.subplots(ncols=3, figsize=(16,5), sharey=True)
 	gamma = [1e-4]
@@ -213,29 +191,9 @@ def param_test(create_data):
 	[[axi.set_ylim(0.0,0.25), axi.grid(), axi.legend(), axi.set_xlabel("Epochs")] for axi in ax]
 	plt.tight_layout()
 	plt.savefig("figures/task_c.pdf")
-	plt.show()
-
-	"""    
-	# Run NN with optimal parameters and compare data with model
-	X_test, Z_test, ztilde = run_terrain_test(xy_len, gamma[yi], eta[xi], hidden_layers, range(epochs)[zi], init, name=name)
-    
-	fig = plt.figure(figsize=figsize)
-	ax = fig.add_subplot(1, 2, 1, projection='3d')
-	ax2 = fig.add_subplot(1, 2, 2, projection='3d')
-
-	ax.plot_trisurf(X_test[:,0], X_test[:,1], Z_test[:,0], cmap='viridis')#, label="Test data")
-	ax.set_title("Test data")
-    
-	ax2.plot_trisurf(X_test[:,0], X_test[:,1], ztilde[:,0], cmap='viridis')#, label="NN Model")
-	ax2.set_title("NN Model")
-    
-	plt.legend()
-	plt.show()
-	"""
-    
+	plt.show()  
 
 
-#run_test_terrain()
 #param_test(create_data=False)
 param_test(create_data=True)
 
