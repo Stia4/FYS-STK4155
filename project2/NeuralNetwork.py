@@ -295,11 +295,11 @@ if __name__ == "__main__":
     NN.addLayer(n_nodes=  1, seed=seed+2, act= "linear") # Output layer
     NN.set_LearningRate(eta=1e-4, method="Adam")
     NN.set_CostFunc("MSE")
-    #NN.train(x, t, epochs=1000, seed=seed)
+    NN.train(x, t, epochs=1000, seed=seed)
     y = NN.test(x)
 
     plt.plot(x, t, label="Target")
-    #plt.plot(x, y, label="Model")
+    plt.plot(x, y, label="Model")
     plt.legend()
     plt.show()
 
