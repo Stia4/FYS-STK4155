@@ -103,8 +103,8 @@ def make_Franke(nx, ny, noise = 0.0, seed=None):
 def SVDinv(A):
 	"""
 	Takes as input a numpy matrix A and returns inv(A) based on singular value decomposition (SVD).
-    SVD is numerically more stable than the inversion algorithms provided by
-    numpy and scipy.linalg at the cost of being slower.
+	SVD is numerically more stable than the inversion algorithms provided by
+    	numpy and scipy.linalg at the cost of being slower.
 	"""
 	U, s, VT = np.linalg.svd(A)
 
@@ -150,7 +150,7 @@ def main_1b():
 	plt.rcParams.update({'font.size': 16})
 
 	### Make goal data
-	nx, ny = (50, 50)
+	nx, ny = (30, 30)
 	x, y, z = make_Franke(nx, ny, noise = 0.1, seed=0)
 
 	### Split data into training and test data, using ~25% as test data
@@ -158,7 +158,7 @@ def main_1b():
 	x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst = train_test_data_evenly(x, y, z, test_size)
 
 	### Make design matrix, calculate beta for OLS, and get model, orders 2 to 6 covered
-	orders = [0,1,2, 3, 4, 5]
+	orders = [1, 2, 3, 4, 5]
 	X_lrn, X_tst, beta_OLS, z_lrn_model, z_tst_model = fit_OLS(orders, x_lrn, y_lrn, z_lrn, x_tst, y_tst, z_tst)
 
 	### Setting up figure name formats, saves to directory 'fig/'
@@ -196,13 +196,11 @@ def main_1b():
 	R2_tst_skl  = [ R2_skl(z_tst, z_tst_model[i]) for i in orders]
 	print("\n learn  " + header)
 	print("MSE     "+"".join(["|{:^10.2e}".format(MSE) for MSE in     MSE_lrn])       )
-	#print("MSE_min "+"".join(["|{:^10.2e}".format(np.min(MSE)) for MSE in     MSE_lrn])       )
 	print("MSE_skl "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_lrn_skl])       )
 	print("R2      "+"".join(["|{:^10.2e}".format( R2) for  R2 in      R2_lrn])       )
 	print("R2_skl  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_lrn_skl]) + "\n")
 	print("  test  " + header)
 	print("MSE     "+"".join(["|{:^10.2e}".format(MSE) for MSE in     MSE_tst])       )
-	print("MSE_min "+"".join(["|{:^10.2e}".format(np.min(MSE)) for MSE in     MSE_lrn])       )
 	print("MSE_skl "+"".join(["|{:^10.2e}".format(MSE) for MSE in MSE_tst_skl])       )
 	print("R2      "+"".join(["|{:^10.2e}".format( R2) for  R2 in      R2_tst])       )
 	print("R2_skl  "+"".join(["|{:^10.2e}".format( R2) for  R2 in  R2_tst_skl]) + "\n")
@@ -212,7 +210,7 @@ def main_1b():
 	### Plotting the MSE/R2 as function of polynomial degree
 	plt.plot(orders, MSE_lrn, "o-", label="MSE Training data")
 	plt.plot(orders, MSE_tst, "o-", label="MSE Test data")
-	plt.hlines(min(MSE_tst), min(orders), max(orders), colors="gray", linestyles="dashed",label="$MSE_{min}$")
+	#plt.hlines(min(MSE_tst), min(orders), max(orders), colors="gray", linestyles="dashed",label="$MSE_{min}$")
 	#plt.hlines(0, min(orders), max(orders), colors="blue", linestyles="dashed")
 	plt.xticks(ticks=orders)
 	plt.xlabel("Polynomial order")
@@ -238,7 +236,7 @@ def main_1b():
 	plt.savefig(figname("R2"), format="pdf")
 	plt.show()
 	### Make plot(s) of surfaces, both data and polynomials
-	ratio = np.array([2, 3], dtype=int) # Grid ratio ratio[0]/ratio[1] (integers!), e.g. screen ratio 16/9 would be 
+	ratio = np.array([2, 3], dtype=int) # Grid ratio ratio[0]/ratio[1] (integers!), e.g. screen ratio 16/9 would be
 	dims = ratio * int(np.ceil(np.sqrt((len(orders)+1)/(ratio[0]*ratio[1])))) # Elements to place in x/y to best match ratio
 	view = [30, 90] # Viewing angle in degrees, [height, rotation]
 	fig = plt.figure(figsize=plt.figaspect(ratio[0]/ratio[1]))
@@ -263,7 +261,7 @@ def main_1b():
 	plt.savefig(figname("Surfaces"), format="pdf")
 	#plt.close(fig) # Messes with later figures unless closed
 	plt.show()
-    
+
 	### Coefficient comparison with errorbars?
 	err = dict()
 	var_noise = dict()
