@@ -12,7 +12,7 @@ class DenseLayer:
         Inputs: # of nodes in this layer, # of nodes in previous layer, and activation function
         Initializes weights and biases
         """
-        self.input_shape = n_prev
+        self.inp_shape = n_prev
         self.output_shape = n_nodes          # Saving output shape for later stacking layers
         self.W = np.zeros((n_prev, n_nodes)) # Weights
         self.b = np.zeros(n_nodes)           # Biases
@@ -46,14 +46,29 @@ class DenseLayer:
 
         return dCda
 
-    def init_wb(self):
+    def init_wb(self, method='Normal'):
         # Initialize weights and biases
         # Need to make sure parameters are non-zero to avoid gradient explosion, and
         # different initial values to make sure nodes diverge
         # Weights are most important due to their quantity compared to biases
         RNG = np.random.default_rng(seed = self.seed) # Try to get variation in layers random distributions
-        self.W += RNG.normal(0, 1, size=self.W.shape)
-        self.b += RNG.normal(0, 1, size=self.b.shape)
+
+        method = 'Xavier' # Hardcoding option
+
+        if method == 'Normal':
+            # Normal distribution
+            self.W += RNG.normal(0, 1, size=self.W.shape)
+            self.b += RNG.normal(0, 1, size=self.b.shape)
+        elif method == 'Xavier':
+            # Xavier distribution
+            n = np.prod(self.inp_shape)
+            self.W += RNG.uniform(-1/n**0.5, 1/n**0.5, size=self.W.shape)
+            self.b += RNG.uniform(-1/n**0.5, 1/n**0.5, size=self.b.shape)
+        elif method == 'He':
+            # He distribution
+            n = np.prod(self.inp_shape)
+            self.W += RNG.normal(0, 2/n, size=self.W.shape)
+            self.b += RNG.normal(0, 2/n, size=self.b.shape)
 
     def reset_wb(self):
         # Resets weights and biases to initial state, useful for comparing outcome
@@ -81,6 +96,11 @@ class ConvolutionalLayer(DenseLayer):
         else:
             raise ValueError("Convolutional layer input has to be either 2D or 3D")
         self.inp_shape = inp_shape
+
+        #
+        # HERE:
+        # Assert input parameters (filter, padding, stride) are legal
+        #
 
         self.W = np.zeros((n_filters, kernel_extent, kernel_extent, D)) # filter i = kernel[i]
         self.b = np.zeros(n_filters)
@@ -157,9 +177,9 @@ class ConvolutionalLayer(DenseLayer):
             x_ = np.zeros((x.shape[0]*s, x.shape[1]*s, x.shape[2]))
             for i in range(x.shape[2]):
                 x_[::s, ::s, i] = x[..., i]
-            if x.shape[0] % 2: # if odd
+            if s > 1 and x.shape[0] % 2: # if odd
                 x_ = x_[:-p]
-            if x.shape[1] % 2: # if odd
+            if s > 1 and x.shape[1] % 2: # if odd
                 x_ = x_[:, :-p]
             return x_
 

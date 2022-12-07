@@ -140,5 +140,58 @@ def bp_test():
           if not i % 50:
                print(i, Cost(a, t))
 
-ff_test()
-bp_test()
+def double_layer():
+     ### Testing two layer setup, used to see if cost is propogated correctly
+     np.random.seed(1)
+
+     ## Setup network parameters
+     k1 = 3
+     k2 = 3
+     n_filters1 = 2
+     n_filters2 = 1
+     stride = 1
+     padding = 0
+     act  = lambda z: z
+     dact = lambda z: np.ones_like(z)
+     #act  = lambda z: np.where(z < 0, 0, z) # ReLu activation function
+     #dact = lambda z: np.where(z < 0, 0, 1)
+
+     ## Generate (seeded) mock input and weights/biases, which give our targets (all ints for clear output)
+     x = np.random.randint(0, 3, (7, 7, 3)) # Random input
+     conv1 = ConvolutionalLayer(x.shape, k1, n_filters1, stride, padding, act, dact, seed=0)
+     conv1.W = np.array(np.random.randint(-3, 3, conv1.W.shape), dtype=float)
+     conv1.b = np.array(np.random.randint(-3, 3, conv1.b.shape), dtype=float)
+     t1 = conv1(x)[1]
+     conv2 = ConvolutionalLayer(t1.shape, k2, n_filters2, stride, padding, act, dact, seed=1)
+     conv2.W = np.array(np.random.randint(-3, 3, conv2.W.shape), dtype=float)
+     conv2.b = np.array(np.random.randint(-3, 3, conv2.b.shape), dtype=float)
+     t2 = conv2(t1)[1]
+
+     ## Reset weights/biases, and see if network can recreate them
+     conv1.reset_wb()
+     conv2.reset_wb()
+
+     ## Set cost function and learning rate
+     Cost = lambda y, t: np.mean((t - y)**2)
+     dCost = lambda y, t: (y - t) * 2#/len(t)
+     eta0 = 1e-5
+     eta = lambda l, lw, g: eta0*g
+
+     # Train network and print cost
+     for i in range(1001):
+          # FF
+          _, a1 = conv1(x)
+          _, a2 = conv2(a1)
+          
+          # BP
+          dCda2 = dCost(a2, t2)
+          dCda1 = conv2.update_wb(dCda2, eta, 1)
+          conv1.update_wb(dCda1, eta, 0)
+
+          # Print
+          if not i % 100:
+               print(i, Cost(a2, t2))
+
+#ff_test()
+#bp_test()
+double_layer()

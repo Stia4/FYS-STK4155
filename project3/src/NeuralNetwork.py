@@ -125,7 +125,7 @@ class NeuralNetwork:
              dact = lambda z: np.where(z < 0, alpha, 1)
         elif act == "linear": # Output layer regression, aka Identity(z)
              act  = lambda z: z
-             dact = lambda z: 1
+             dact = lambda z: np.ones_like(z)
         elif act == "Softmax": # Output layer multiple-category classification
              act  = lambda z: np.exp(z)/(np.sum(np.exp(z)))
              dact = jax.autograd(act)
@@ -178,12 +178,6 @@ class NeuralNetwork:
 
         dCda = self.costgrad(layers[L].a, t) # Output cost
         for l in range(L, -1, -1):
-            #
-            # HERE: Do 2D to 1D check?
-            # layers[l].input_nodes = int or tuple ?
-            # or output shape? Reshape 1D dCda into 2D as
-            # backprop enters pooling/conv.
-            #
             dCda = layers[l].update_wb(dCda, eta, l) # Each hidden layer updates with cost, and gives new to prev layer
 
         self.iters += 1 # Counting iterations, since some adaptive learning methods use it
@@ -202,21 +196,11 @@ class NeuralNetwork:
         for epoch in epochs_r:
             p = RNG.permutation(len(t))
             X_, t_ = X[p], t[p]
-            for i in range(len(t)):
+            for i in trange(len(t)):
                 self.FeedForward(X_[i])
                 self.BackPropogate(t_[i])
 
-    def test(self, X):
-        """
-        Calls upon network for all points in X
-        """
-        a = np.zeros((len(X), *self.layers[-1].output_shape), dtype=float)
-        for i, Xi in enumerate(X):
-            a[i] = self.__call__(Xi)
-
-        return a
-
-    def classify(self, X):
+    def test(self, X, classify=0):
         """
         Calls upon network for all points in x, but also uses binary classification,
         where 0 is returned if output(xi) in X is less than (or equal to) 0.5, or 1 if output is larger than 0.5
@@ -225,11 +209,30 @@ class NeuralNetwork:
         future, i.e. [0.2, 0.2, 0.5, 0.1] -> 3 (2 for zero indexing), currently assumes
         only one node (binary problem)
 
-        Merge with 'test' function, adding 'classify' as keyword?
+        Merge with 'test' function, adding 'classify' as keyword? classify could be number of categories?
+        Regression: 0 (default), Binary or single class: 1 (binary/class separated by # of output nodes), Multiclass: n >= 2
         """
-        a = np.zeros(len(X), dtype=float)
+        output_dim = self.layers[-1].output_shape
+        if np.ndim(output_dim) == 1: # Test if output has to be unpacked or not for array generation (list or int)
+            a = np.zeros((len(X), *output_dim), dtype=float)
+        else:
+            a = np.zeros((len(X), output_dim), dtype=float)
+        a = a.squeeze()
+        
+        if not classify: # No classification: Simply return output
+            categorize = lambda x: x
+        elif classify == 1: # Single category: If several nodes: Return node idx with highest value, if single node: Return 1 if output >= 0.5, else 0
+            if np.ndim(output_dim) == 1: # Assumed output layer is 1D or 0D (single value)
+                categorize = lambda x: np.argmax(x)
+            else: # Assumed ndim(output_dim) = 0 (single value)
+                categorize = lambda x: 1 if x >= 0.5 else 0
+        elif classify >= 2: # Multiple categories, return indexes of n=classify largest values from output
+            categorize = lambda x: np.argpartition(x, -classify)[-classify:]
+        else:
+            raise ValueError("Classify argument has to be integer >= 0, see documentation")
+
         for i, Xi in enumerate(X):
-            a[i] = 1 if self.__call__(Xi) > 0.5 else 0
+            a[i] = categorize(self.__call__(Xi))
 
         return a
 
