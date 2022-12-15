@@ -4,21 +4,19 @@ from tqdm import trange
 import Layers
 
 class NeuralNetwork:
-    def __init__(self, input_nodes):
+    def __init__(self, input_nodes, init_method="Normal"):
         """
         Take input parameters and set up necessary containters and values
         """
         self.input_nodes = input_nodes # Number of input nodes, can be multidimensional
         self.layers = []               # Container for all layers in network
-        #self.lam # Regularization term
+        self.init = init_method        # Overarching initialisation method for weights/biases, can be overruled for individual layers
+        self.structure = [[], []]      # List to keep track of network structure, preset with position for cost and learnrate info
 
     def __call__(self, x):
         """
         Calculate output for current weights/biases, useful for when network is done developing
         """
-        #
-        # HERE: Normalize input to [0,1]? Else numbers may blow up later
-        #
         self.FeedForward(x)      # Do FF with input
         return self.layers[-1].a # Activated output from final layer
 
@@ -49,6 +47,8 @@ class NeuralNetwork:
                 raise ValueError(f"No cost function with identifier {costfunc} found, see documentation")
         else:
             raise ValueError("Input for cost function is not valid, see documentation")
+
+        self.structure[-2] = [costfunc, costgrad]
 
     def set_LearningRate(self, eta=1e-3, method=None, delta=1e-7, rho1=0.9, rho2=0.999):
         """
@@ -92,8 +92,9 @@ class NeuralNetwork:
             raise ValueError(f"Adaptive method has to be either None or a valid string, see documentation")
 
         self.eta = eta # Store to be used in network
+        self.structure[-1] = [eta0, method, delta, rho1, rho2] # Save input to structure
 
-    def addLayer(self, type="Dense", params=100, act="Sigmoid", alpha=None, seed=0):
+    def addLayer(self, type="Dense", params=100, act="Sigmoid", alpha=None, init_method=None, seed=0):
         """
         Adds later of given type and width to current network, in first to last order
         Alpha is a hyperparameter, set to default values if not specified
@@ -104,31 +105,36 @@ class NeuralNetwork:
         See documentation for each separate layer to see further description of parameters
         """
         ### Either take in activation function, or set to any predefined types
+        act0 = act
         if callable(act):
-             act = act
+            act = act
+            dact = jax.autograd(act)
         elif act == "Sigmoid":
-             act  = lambda z: 1/(1 + np.exp(-z))
-             dact = lambda z: act(z)*(1 - act(z))
+            act  = lambda z: 1/(1 + np.exp(-z))
+            dact = lambda z: act(z)*(1 - act(z))
         elif act == "tanh":
-             act  = lambda z: np.tanh(z)
-             dact = lambda z: 1 - np.tanh(z)**2
+            act  = lambda z: np.tanh(z)
+            dact = lambda z: 1 - np.tanh(z)**2
         elif act == "ELU":
-             alpha = 1.00 if not alpha else alpha
-             act  = lambda z: np.where(z < 0, alpha*(np.exp(z) - 1), z)
-             dact = lambda z: np.where(z < 0, alpha*np.exp(z), 1)
+            alpha = 1.00 if not alpha else alpha
+            act  = lambda z: np.where(z < 0, alpha*(np.exp(z) - 1), z)
+            dact = lambda z: np.where(z < 0, alpha*np.exp(z), 1)
         elif act == "ReLU":
-             act  = lambda z: np.where(z < 0, 0, z)
-             dact = lambda z: np.where(z < 0, 0, 1)
+            act  = lambda z: np.where(z < 0, 0, z)
+            dact = lambda z: np.where(z < 0, 0, 1)
         elif act == "LeakyReLU": # Actually Parametric ReLU with default state Leaky ReLU
-             alpha = 0.01 if not alpha else alpha
-             act  = lambda z: np.where(z < 0, alpha*z, z)
-             dact = lambda z: np.where(z < 0, alpha, 1)
+            alpha = 0.01 if not alpha else alpha
+            act  = lambda z: np.where(z < 0, alpha*z, z)
+            dact = lambda z: np.where(z < 0, alpha, 1)
         elif act == "linear": # Output layer regression, aka Identity(z)
-             act  = lambda z: z
-             dact = lambda z: np.ones_like(z)
-        elif act == "Softmax": # Output layer multiple-category classification
-             act  = lambda z: np.exp(z)/(np.sum(np.exp(z)))
-             dact = jax.autograd(act)
+            act  = lambda z: z
+            dact = lambda z: np.ones_like(z)
+        elif act == "Softmax": # Output layer multi-class classification
+            act  = lambda z: np.exp(z)/(np.sum(np.exp(z)))
+            # dact = lambda z: act(z) - act(z)**2
+            # dact = lambda z: np.sum(np.diag(act(z)) - act(z)**2, axis=0)
+            dact = lambda z: np.sum(np.diag(act(z)) - np.outer(act(z), act(z)), axis=0)
+
         else:
             raise ValueError("No valid activation function callable or identifier input")
 
@@ -139,17 +145,26 @@ class NeuralNetwork:
         else:
             prev_nodes = self.layers[-1].output_shape
 
+        ### Select parameter initialization method, if none is chosen -> use network default
+        ### See DenseLayer function init_wb() for available methods, which other layers inherit
+        if init_method is None:
+            init = self.init
+        else:
+            init = init_method
+
         ### Append layer of given type
         if type == "Dense":
             if np.ndim(prev_nodes) != 0: # If previous layer output is multidimensional, flatten it
                prev_nodes = np.prod(prev_nodes)
-            self.layers.append(Layers.DenseLayer(prev_nodes, params, act, dact, seed))
+            self.layers.append(Layers.DenseLayer(prev_nodes, params, act, dact, init, seed))
         elif type == "Convolutional":
-            self.layers.append(Layers.ConvolutionalLayer(prev_nodes, *params, act, dact, seed)) # prev_nodes == input_shape
+            self.layers.append(Layers.ConvolutionalLayer(prev_nodes, *params, act, dact, init, seed)) # prev_nodes == input_shape
         elif type == "Pooling":
             self.layers.append(Layers.PoolingLayer(prev_nodes, *params, seed))
         else:
             raise ValueError("No valid layer type identifier input")
+
+        self.structure.insert(-2, [type, params, act0, alpha, init_method, seed]) # Save layer setup
 
     def FeedForward(self, x):
         """
@@ -186,17 +201,25 @@ class NeuralNetwork:
         """
         Do forward and backward sweeps for learning
         Does epochs*len(t) iterations, where X,t are shuffled for each epoch
+        Assumes epochs are long, so progress bar is set on per-epoch basis if not silent
         """
         RNG = np.random.default_rng(seed)
         if silent:
-            epochs_r = range(epochs)
+            range_ = range
         else:
-            epochs_r = trange(epochs)
+            range_ = trange
 
-        for epoch in epochs_r:
+        # Make 'one-hot vector', if t = 2, n_output = 4 -> t = [0, 0, 1, 0] (zero indexed)
+        if self.layers[-1].output_shape > 1 and np.ndim(t[0]) == 0:
+            t_ = np.zeros((len(t), self.layers[-1].output_shape)) # shape len(t) -> (len(t), output_nodes)
+            for i, ti in enumerate(t):
+                t_[i, ti] = 1
+            t = t_
+
+        for epoch in range(epochs):
             p = RNG.permutation(len(t))
             X_, t_ = X[p], t[p]
-            for i in trange(len(t)):
+            for i in range_(len(t)):
                 self.FeedForward(X_[i])
                 self.BackPropogate(t_[i])
 
@@ -244,17 +267,70 @@ class NeuralNetwork:
         for layer in self.layers:
             layer.reset_wb()
     
-    def save_params(self, path="NetworkParameters"):
+    def save_params(self, path="NetworkParameters.npy", silent=False):
         """
         Saves weights and biases for all layers to file
         """
-        wb = np.array([[l.W, l.b] for l in self.layers])
+        wb = np.array([[l.W, l.b] for l in self.layers], dtype=object)
         np.save(path, wb)
+        if not silent:
+            print(f"Saved parameters to file {path}")
     
-    def load_params(self, path="NetworkParameters.npy"):
+    def load_params(self, path="NetworkParameters.npy", silent=False):
         """
         Loads weights and biases for all layers from file
         """
         wb = np.load(path, allow_pickle=True)
         for i, l in enumerate(self.layers):
             l.W, l.b = wb[i]
+        if not silent:
+            print(f"Loaded parameters from file {path}")
+
+    def setup_network(self, structure):
+        """
+        Network structure is essentially a list of inputs to addLayer,
+        followed by inputs to set_CostFunc and set_LearningRate
+        Not intended to be used by user, as functions could be called individually,
+        but rather as a way of automating loading networks
+        For what all the inputs mean, see individual functions addLayer,
+        set_CostFunc, and set_LearningRate.
+
+        Example structure:
+        structure = [
+            [ "Convolutional", [3, 16, 1, 1],  "linear", None, None, 0],
+            [       "Pooling",    [2, "max"],      None, None, None, 0],
+            [ "Convolutional", [3, 32, 1, 1],  "linear", None, None, 0],
+            [       "Pooling",    [2, "max"],      None, None, None, 0],
+            [ "Convolutional", [3, 64, 1, 1],  "linear", None, None, 0],
+            [       "Pooling",    [2, "max"],      None, None, None, 0],
+            [         "Dense",           100, "Sigmoid", None, None, 0],
+            [         "Dense",             1, "Sigmpod", None, None, 0],
+            ["MSE", None],
+            [1e-3, None, 1e-7, 0.9, 0.999]
+        ]
+        """
+        for layer in structure[:-2]:
+            self.addLayer(*layer)
+        self.set_CostFunc(*structure[-2])
+        self.set_LearningRate(*structure[-1])
+
+    def save_network(self, path="Network.npy", silent=False):
+        """
+        Saves all info about network to file, including structure (layers, cost, and learnrate)
+        and parameters (weights & biases).
+        """
+        wb = np.array([[l.W, l.b] for l in self.layers], dtype=object)
+        np.save(path, np.array([self.structure, wb], dtype=object))
+        if not silent:
+            print(f"Saved network to file {path}")
+
+    def load_network(self, path="Network.npy", silent=False):
+        """
+        Loads info as saved via save_network(), and sets it up as specified
+        """
+        structure, wb = np.load(path, allow_pickle=True)
+        self.setup_network(structure)
+        for i, l in enumerate(self.layers):
+            l.W, l.b = wb[i]
+        if not silent:
+            print(f"Network loaded from file {path}")

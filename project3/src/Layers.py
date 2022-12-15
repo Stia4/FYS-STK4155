@@ -7,7 +7,7 @@ class DenseLayer:
     Used as both container for network parameters (weights and biases) and activation functions,
     and as calculator for forward sweeps, where layers are called upon to calculate each step
     """
-    def __init__(self, n_prev, n_nodes, activation_function, activation_derivative, seed=0):
+    def __init__(self, n_prev, n_nodes, activation_function, activation_derivative, init_method, seed=0):
         """
         Inputs: # of nodes in this layer, # of nodes in previous layer, and activation function
         Initializes weights and biases
@@ -19,7 +19,7 @@ class DenseLayer:
         self.act = activation_function       # Activation function
         self.dact = activation_derivative    # Derivative of activation function
         self.seed = seed
-        self.init_wb()
+        self.init_wb(init_method)
 
     def __call__(self, x):
         # Forward sweep portion for this layer
@@ -46,15 +46,13 @@ class DenseLayer:
 
         return dCda
 
-    def init_wb(self, method='Normal'):
+    def init_wb(self, method):
         # Initialize weights and biases
         # Need to make sure parameters are non-zero to avoid gradient explosion, and
         # different initial values to make sure nodes diverge
         # Weights are most important due to their quantity compared to biases
+        # Different initialization methods are implemented, which can be useful in different situations
         RNG = np.random.default_rng(seed = self.seed) # Try to get variation in layers random distributions
-
-        method = 'Xavier' # Hardcoding option
-
         if method == 'Normal':
             # Normal distribution
             self.W += RNG.normal(0, 1, size=self.W.shape)
@@ -69,6 +67,8 @@ class DenseLayer:
             n = np.prod(self.inp_shape)
             self.W += RNG.normal(0, 2/n, size=self.W.shape)
             self.b += RNG.normal(0, 2/n, size=self.b.shape)
+        else:
+            raise ValueError("Initialization method not valid, see documentation")
 
     def reset_wb(self):
         # Resets weights and biases to initial state, useful for comparing outcome
@@ -85,7 +85,7 @@ class ConvolutionalLayer(DenseLayer):
     could be improved in the future?
     """
     def __init__(self, inp_shape, kernel_extent, n_filters, stride, padding,
-                       activation_function, activation_derivative, seed=0):
+                       activation_function, activation_derivative, init_method, seed=0):
         """
         Square kernel is assumed, with same depth as input (i.e. D=3 for RGB, and D=1 for grayscale images)
         """
@@ -118,7 +118,7 @@ class ConvolutionalLayer(DenseLayer):
         self.padding = padding
 
         self.seed = seed
-        self.init_wb()
+        self.init_wb(init_method)
 
     def __call__(self, x):
         """
