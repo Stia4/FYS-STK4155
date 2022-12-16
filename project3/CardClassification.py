@@ -74,7 +74,6 @@ def BinaryTest():
 
     ##### Network setup #####
     costfunc = "MSE"
-    eta0 = 1e-3; ada_method=None
     eta0 = 1e-3; ada_method="Adam"
 
     image_size = X_train[0].shape
@@ -96,7 +95,7 @@ def BinaryTest():
     print_structure(image_size, NN, ada_method, eta0, costfunc)
     print("--Initial state--")
     p, cost, acc = print_score(NN, X_test, t_test)
-    
+
     n_iters = 10
     p_list = [p]; acc_list = [acc] # Collect state of system while training
     for i in range(n_iters):
@@ -114,8 +113,8 @@ def BinaryTest():
         color = "red" if t_test[i] == 1 else "blue"
         ax0.plot(np.arange(n_iters+1), p, color=color)
     ax1.plot(np.arange(n_iters+1), acc_list)
-    plt.suptitle("Per-node output probability and accuracy score evolution")
-    ax0.set_ylabel("Node output probability")
+    plt.suptitle("Per-card output probability and accuracy score evolution")
+    ax0.set_ylabel("Card output probability")
     ax1.set_ylabel("Accuracy")
     ax1.set_xlabel("Epochs")
     plt.tight_layout()
@@ -172,7 +171,6 @@ def FullTest():
     params = [{'suit':suit, 'num':rank} for suit in range(1,5) for rank in range(1,14)] # All 52 suit+rank combinations
     n_train_cards = 20 # per class in params
     n_test_cards = 10
-    # n_test_cards = 1
     X_train, X_test, t_train, t_test = load_data(params, size=(n_train_cards, n_test_cards), fullsize=False)
 
     ##### Network setup #####
@@ -199,7 +197,6 @@ def FullTest():
     print("--Initial state--")
     p, cost, acc = print_score(NN, X_test, t_test, multiclass=True)
 
-    n_iters = 20
     n_iters = 0
     for i in range(n_iters):
         print(f"--Iteration {i+1}--")
@@ -287,4 +284,4 @@ def FullTest():
 if __name__ == "__main__":
     BinaryTest()
     # SuitTest()
-    FullTest()
+    # FullTest()
