@@ -169,7 +169,7 @@ for i in range(len(x_tst)):
 ax[0].set_ylabel("Error using OLS")
 ax[0].legend()
 plt.tight_layout()
-plt.savefig("tradeoff_OLS.pdf")
+plt.savefig("fig/tradeoff_OLS.pdf")
 plt.show()
 
 
@@ -187,7 +187,7 @@ for i in range(len(x_tst)):
 ax[0].set_ylabel("Error using Trees")
 ax[0].legend()
 plt.tight_layout()
-plt.savefig("tradeoff_trees.pdf")
+plt.savefig("fig/tradeoff_trees.pdf")
 plt.show()
 
 
@@ -209,5 +209,5 @@ for i in range(len(x_tst)):
 ax[0].set_ylabel("Error using FFNN")
 ax[0].legend()
 plt.tight_layout()
-plt.savefig("tradeoff_nn.pdf")
+plt.savefig("fig/tradeoff_nn.pdf")
 plt.show()
